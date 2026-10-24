@@ -1,0 +1,438 @@
+{
+  "info": {
+    "_postman_id": "7832a812-4291-4cf1-8c44-b892a0194e82",
+    "name": "RouteWise Full-Stack REST API Collection",
+    "description": "Comprehensive Postman test collection for RouteWise Vehicle Route & Multi-Fuel Cost Optimizer.\nCovers Health Check, Authentication, Profile & Avatar Upload, Saved Trips CRUD, City Fuel Rates, GIS City Streams, Route Calculations, Feedback, and Academic Syllabus Demos.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tripId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. System Health & Status",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "health"]
+        },
+        "description": "Returns system uptime, Node runtime environment, and MongoDB connection status."
+      }
+    },
+    {
+      "name": "2. Authentication",
+      "item": [
+        {
+          "name": "Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rajesh Pilot\",\n  \"email\": \"rajesh.pilot@example.com\",\n  \"password\": \"highway2026\",\n  \"fuelPreference\": \"cng\",\n  \"vehicleMileage\": 26\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('authToken', json.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"driver@routewise.in\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Get Current Profile (Protected)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update Profile (Protected)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Vikram Kumar Updated\",\n  \"fuelPreference\": \"cng\",\n  \"vehicleMileage\": 28\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Trips CRUD (Protected)",
+      "item": [
+        {
+          "name": "Create Saved Trip",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var json = pm.response.json();",
+                  "    pm.collectionVariables.set('tripId', json.trip._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Delhi to Jaipur Commercial Route\",\n  \"origin\": {\"name\": \"Delhi\", \"lat\": 28.6139, \"lng\": 77.2090},\n  \"destination\": {\"name\": \"Jaipur\", \"lat\": 26.9124, \"lng\": 75.7873},\n  \"stops\": [{\"name\": \"Agra\", \"lat\": 27.1767, \"lng\": 78.0081}],\n  \"distanceKm\": 294.1,\n  \"durationMinutes\": 270,\n  \"fuelType\": \"cng\",\n  \"fuelEfficiency\": 25,\n  \"fuelPrice\": 75.09,\n  \"totalCost\": 886.06,\n  \"notes\": \"Postman verification test journey\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trips",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips"]
+            }
+          }
+        },
+        {
+          "name": "Get All Saved Trips",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "10" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single Trip by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "{{tripId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Trip",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Updated notes from Postman automated test\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "{{tripId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Trip",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/trips/{{tripId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "trips", "{{tripId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Route & Fuel Calculation",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"waypoints\": [\n    {\"name\": \"Delhi\", \"lat\": 28.6139, \"lng\": 77.2090},\n    {\"name\": \"Jaipur\", \"lat\": 26.9124, \"lng\": 75.7873}\n  ],\n  \"fuelType\": \"cng\",\n  \"fuelEfficiency\": 25,\n  \"fuelPrice\": 75.09\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/routes/calculate",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "routes", "calculate"]
+        }
+      }
+    },
+    {
+      "name": "5. City Fuel Rates",
+      "item": [
+        {
+          "name": "Get All City Rates",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/fuel-rates",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fuel-rates"]
+            }
+          }
+        },
+        {
+          "name": "Get City Rate by Name",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/fuel-rates/mumbai",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "fuel-rates", "mumbai"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Indian Cities GIS Streams",
+      "item": [
+        {
+          "name": "Search Cities Autocomplete",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cities?q=bengaluru&limit=5",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cities"],
+              "query": [
+                { "key": "q", "value": "bengaluru" },
+                { "key": "limit", "value": "5" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Cities Dataset Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/cities/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "cities", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Community Feedback",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Suresh Patel\",\n  \"email\": \"suresh@example.com\",\n  \"topic\": \"✨ Feature Suggestion\",\n  \"subject\": \"EV Charger Points Integration\",\n  \"message\": \"Please consider displaying EV charger stations along the route in the future.\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/feedback",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "feedback"]
+        }
+      }
+    },
+    {
+      "name": "8. Academic Syllabus Demos",
+      "item": [
+        {
+          "name": "Node.js & V8 Runtime Inspector",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/node-info",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "demo", "node-info"]
+            }
+          }
+        },
+        {
+          "name": "Async Programming Comparison",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/async-comparison",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "demo", "async-comparison"]
+            }
+          }
+        },
+        {
+          "name": "Node.js Streams & Buffers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/streams-buffers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "demo", "streams-buffers"]
+            }
+          }
+        },
+        {
+          "name": "EventEmitter Live Probe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/demo/event-emitter",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "demo", "event-emitter"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

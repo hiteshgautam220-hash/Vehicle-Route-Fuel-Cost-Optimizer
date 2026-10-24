@@ -1,16 +1,41 @@
 /**
  * RouteWise — auth.js
- * Account Database, Login, Signup, Logout, Guest Mode, Session restore, Car animation.
- * Depends on: config.js, utils.js
+ * Account Management, Backend API Authentication, JWT Session Restore,
+ * Profile & Avatar Upload, Guest Mode, and Animated Car Engine Startup.
+ * Depends on: api.js, config.js, utils.js
  */
 
-// ── Auth State & Registered Accounts Database ─────────────────────
 let currentUser = null;
 
-const DEFAULT_SEED_USERS = [
-    { name: "Vikram Kumar", email: "driver@routewise.in", password: "password123", fuel: "cng", mileage: 25 },
-    { name: "Ananya Sharma", email: "fleet@routewise.in", password: "password123", fuel: "diesel", mileage: 20 }
-];
+// ── Session Restorer on Page Load ───────────────────────────────────
+async function checkAuthSession() {
+    const token = RouteWiseAPI.getToken();
+    if (!token) {
+        currentUser = null;
+        renderAuthNavbar();
+        return null;
+    }
+
+    try {
+        const res = await RouteWiseAPI.auth.getMe();
+        if (res.success && res.user) {
+            currentUser = res.user;
+            localStorage.setItem('routeWiseUser', JSON.stringify(currentUser));
+            renderAuthNavbar();
+            if (typeof refreshSavedRoutesForCurrentUser === 'function') {
+                refreshSavedRoutesForCurrentUser();
+            }
+            return currentUser;
+        }
+    } catch (err) {
+        console.warn('[Auth] Session token expired or invalid:', err.message);
+        RouteWiseAPI.clearToken();
+        localStorage.removeItem('routeWiseUser');
+        currentUser = null;
+        renderAuthNavbar();
+    }
+    return null;
+}
 
 function getStoredSessionUser() {
     try {
@@ -21,23 +46,6 @@ function getStoredSessionUser() {
     }
 }
 
-function getRegisteredUsers() {
-    const stored = localStorage.getItem('routeWiseUsers');
-    if (!stored) {
-        localStorage.setItem('routeWiseUsers', JSON.stringify(DEFAULT_SEED_USERS));
-        return DEFAULT_SEED_USERS;
-    }
-    try {
-        return JSON.parse(stored) || DEFAULT_SEED_USERS;
-    } catch (e) {
-        return DEFAULT_SEED_USERS;
-    }
-}
-
-function saveRegisteredUsers(users) {
-    localStorage.setItem('routeWiseUsers', JSON.stringify(users));
-}
-
 // ── Auth Mode Toggle (Sign In / Sign Up tabs) ────────────────────
 window.setGatewayAuthMode = (mode) => {
     const btnSignIn  = document.getElementById('gateway-tab-signin');
@@ -46,98 +54,151 @@ window.setGatewayAuthMode = (mode) => {
     const formSignUp = document.getElementById('gateway-signup-form');
 
     if (mode === 'signin') {
-        btnSignIn?.classList.add('active');    btnSignUp?.classList.remove('active');
+        btnSignIn?.classList.add('active');
+        btnSignUp?.classList.remove('active');
         if (formSignIn) formSignIn.style.display = 'block';
         if (formSignUp) formSignUp.style.display = 'none';
     } else {
-        btnSignUp?.classList.add('active');    btnSignIn?.classList.remove('active');
+        btnSignUp?.classList.add('active');
+        btnSignIn?.classList.remove('active');
         if (formSignUp) formSignUp.style.display = 'block';
         if (formSignIn) formSignIn.style.display = 'none';
     }
 };
 
-// ── Form Submit Handlers ─────────────────────────────────────────
+// ── Form Submit Handlers (Connected to Express REST API) ───────────
 
 // 1. Sign In Form
-document.getElementById('gateway-signin-form')?.addEventListener('submit', (e) => {
+document.getElementById('gateway-signin-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const emailInput    = document.getElementById('gateway-signin-email')?.value.trim();
     const passwordInput = document.getElementById('gateway-signin-password')?.value;
+    const submitBtn     = e.target.querySelector('button[type="submit"]');
 
     if (!emailInput || !passwordInput) {
-        showToast("Please enter both email/username and password.", "warning");
+        showToast("Please enter both email and password.", "warning");
         return;
     }
 
-    const users = getRegisteredUsers();
-    const matchedUser = users.find(u =>
-        u.email.toLowerCase() === emailInput.toLowerCase() && u.password === passwordInput
-    );
+    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Authenticating...';
+    }
 
-    if (matchedUser) {
+    try {
+        const data = await RouteWiseAPI.auth.login({
+            email: emailInput,
+            password: passwordInput
+        });
+
+        RouteWiseAPI.setToken(data.token);
+        currentUser = data.user;
+        localStorage.setItem('routeWiseUser', JSON.stringify(currentUser));
+
         hideAuthGateway();
-        triggerLoginSequence(matchedUser);
-    } else {
-        showToast("Invalid email or password. Please check credentials or create an account.", "error");
+        triggerLoginSequence(currentUser);
+    } catch (err) {
+        showToast(err.message || 'Login failed. Please verify credentials.', 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+        }
     }
 });
 
 // 2. Sign Up Form
-document.getElementById('gateway-signup-form')?.addEventListener('submit', (e) => {
+document.getElementById('gateway-signup-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name    = document.getElementById('gateway-signup-name')?.value.trim();
     const email   = document.getElementById('gateway-signup-email')?.value.trim().toLowerCase();
     const fuel    = document.getElementById('gateway-signup-fuel')?.value || 'cng';
     const mileage = parseFloat(document.getElementById('gateway-signup-mileage')?.value) || 24;
     const password= document.getElementById('gateway-signup-password')?.value;
+    const submitBtn = e.target.querySelector('button[type="submit"]');
 
     if (!name || !email || !password) {
         showToast("Please fill in all required account fields.", "warning");
         return;
     }
 
-    if (password.length < 4) {
-        showToast("Password must be at least 4 characters long.", "warning");
+    if (password.length < 6) {
+        showToast("Password must be at least 6 characters long.", "warning");
         return;
     }
 
-    const users = getRegisteredUsers();
-    const exists = users.some(u => u.email.toLowerCase() === email);
-
-    if (exists) {
-        showToast(`An account with email "${email}" already exists. Please sign in.`, "warning");
-        setGatewayAuthMode('signin');
-        const emailField = document.getElementById('gateway-signin-email');
-        if (emailField) emailField.value = email;
-        return;
+    const originalBtnHtml = submitBtn ? submitBtn.innerHTML : '';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Registering Account...';
     }
 
-    const newUser = { name, email, password, fuel, mileage, createdAt: new Date().toISOString() };
-    users.push(newUser);
-    saveRegisteredUsers(users);
+    try {
+        const data = await RouteWiseAPI.auth.register({
+            name,
+            email,
+            password,
+            fuelPreference: fuel,
+            vehicleMileage: mileage
+        });
 
-    hideAuthGateway();
-    triggerLoginSequence(newUser);
+        RouteWiseAPI.setToken(data.token);
+        currentUser = data.user;
+        localStorage.setItem('routeWiseUser', JSON.stringify(currentUser));
+
+        hideAuthGateway();
+        triggerLoginSequence(currentUser);
+    } catch (err) {
+        showToast(err.message || 'Registration failed.', 'error');
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalBtnHtml;
+        }
+    }
 });
 
-// 3. Quick 1-Click Demo Login Handlers
+// 3. Quick 1-Click Instant Logins (Calling Express Authentication API)
+async function performQuickLogin(email, password) {
+    try {
+        showToast('Connecting to Express authentication engine...', 'info');
+        const data = await RouteWiseAPI.auth.login({ email, password });
+        RouteWiseAPI.setToken(data.token);
+        currentUser = data.user;
+        localStorage.setItem('routeWiseUser', JSON.stringify(currentUser));
+        hideAuthGateway();
+        triggerLoginSequence(currentUser);
+    } catch (err) {
+        // Fallback for offline demo mode
+        const fallbackSeed = {
+            name: email.includes('fleet') ? 'Ananya Sharma (Fleet Manager)' : 'Vikram Kumar (CNG Driver)',
+            email,
+            fuelPreference: email.includes('fleet') ? 'diesel' : 'cng',
+            vehicleMileage: email.includes('fleet') ? 20 : 25
+        };
+        currentUser = fallbackSeed;
+        localStorage.setItem('routeWiseUser', JSON.stringify(currentUser));
+        hideAuthGateway();
+        triggerLoginSequence(currentUser);
+    }
+}
+
 document.getElementById('btn-quick-cng-driver')?.addEventListener('click', () => {
-    const seed = DEFAULT_SEED_USERS[0];
-    hideAuthGateway();
-    triggerLoginSequence(seed);
+    performQuickLogin('driver@routewise.in', 'password123');
 });
 
 document.getElementById('btn-quick-fleet-mgr')?.addEventListener('click', () => {
-    const seed = DEFAULT_SEED_USERS[1];
-    hideAuthGateway();
-    triggerLoginSequence(seed);
+    performQuickLogin('fleet@routewise.in', 'password123');
 });
 
 // ── Car Animation + App Unlock ───────────────────────────────────
 function triggerLoginSequence(userObj) {
     currentUser = userObj;
-    localStorage.setItem('routeWiseUser', JSON.stringify(currentUser));
-    if (typeof refreshSavedRoutesForCurrentUser === 'function') refreshSavedRoutesForCurrentUser();
+    renderAuthNavbar();
+    if (typeof refreshSavedRoutesForCurrentUser === 'function') {
+        refreshSavedRoutesForCurrentUser();
+    }
 
     const overlay   = document.getElementById('car-transition-overlay');
     const progress  = document.getElementById('car-anim-progress');
@@ -151,27 +212,26 @@ function triggerLoginSequence(userObj) {
         if (subtitle) subtitle.textContent = `Authenticating profile for ${userObj.name}...`;
 
         setTimeout(() => {
-            if (progress) progress.style.width = '45%';
+            if (progress) progress.style.width = '50%';
             if (title)    title.textContent    = "Connecting Highway Satellite Networks...";
             if (subtitle) subtitle.textContent = "Loading 4,000+ Indian road networks and live fuel rates...";
-        }, 650);
+        }, 500);
 
         setTimeout(() => {
             if (progress) progress.style.width = '100%';
             if (title)    title.textContent    = `Welcome to RouteWise, ${userObj.name}!`;
             if (subtitle) subtitle.textContent = "Launching RouteWise Journey Planner...";
-        }, 1400);
+        }, 1100);
 
         setTimeout(() => {
             overlay.classList.remove('active');
             unlockApplication();
             showToast(`Welcome back to RouteWise, ${userObj.name}!`, 'success');
 
-            // If a trip was pending to save from guest prompt, save it now
             if (typeof processPendingTripSave === 'function') {
                 processPendingTripSave();
             }
-        }, 2200);
+        }, 1700);
     } else {
         unlockApplication();
         if (typeof processPendingTripSave === 'function') {
@@ -180,15 +240,8 @@ function triggerLoginSequence(userObj) {
     }
 }
 
-// ── Initial Website Load Screen Animation ─────────────────────────
-window.triggerInitialLoadingSequence = (userObj) => {
-    if (userObj) {
-        currentUser = userObj;
-        if (typeof refreshSavedRoutesForCurrentUser === 'function') refreshSavedRoutesForCurrentUser();
-    } else {
-        currentUser = null;
-    }
-
+// Initial Website Load Screen Animation
+window.triggerInitialLoadingSequence = async (storedUser) => {
     const overlay   = document.getElementById('car-transition-overlay');
     const progress  = document.getElementById('car-anim-progress');
     const title     = document.getElementById('car-anim-title');
@@ -198,25 +251,27 @@ window.triggerInitialLoadingSequence = (userObj) => {
         overlay.classList.add('active');
         if (progress) progress.style.width = '0%';
         if (title)    title.textContent    = "Starting Your Engine...";
-        if (subtitle) subtitle.textContent = userObj ? `Restoring profile for ${userObj.name}...` : "Calibrating Highway Networks & Fuel Prices...";
+        if (subtitle) subtitle.textContent = storedUser ? `Restoring profile for ${storedUser.name}...` : "Calibrating Highway Networks & Fuel Prices...";
 
         setTimeout(() => {
-            if (progress) progress.style.width = '55%';
+            if (progress) progress.style.width = '60%';
             if (title)    title.textContent    = "Connecting Satellite Road Graphs...";
             if (subtitle) subtitle.textContent = "Loading 4,000+ Indian road networks and live fuel rates...";
-        }, 550);
+        }, 400);
 
         setTimeout(() => {
             if (progress) progress.style.width = '100%';
-            if (title)    title.textContent    = userObj ? `Welcome back, ${userObj.name}!` : "Welcome to RouteWise!";
+            if (title)    title.textContent    = storedUser ? `Welcome back, ${storedUser.name}!` : "Welcome to RouteWise!";
             if (subtitle) subtitle.textContent = "Launching RouteWise Journey Planner...";
-        }, 1200);
+        }, 900);
 
-        setTimeout(() => {
+        setTimeout(async () => {
             overlay.classList.remove('active');
+            await checkAuthSession();
             unlockApplication();
-        }, 1800);
+        }, 1400);
     } else {
+        await checkAuthSession();
         unlockApplication();
     }
 };
@@ -236,138 +291,252 @@ function renderAuthNavbar() {
     if (!authNavContainer) return;
 
     if (currentUser) {
-        // Authenticated State
         const initials = getUserInitials(currentUser.name);
-        const fuelUpper = (currentUser.fuel || 'CNG').toUpperCase();
-        const mileage = currentUser.mileage || 25;
-        const savedCount = (typeof savedRoutes !== 'undefined' && Array.isArray(savedRoutes)) ? savedRoutes.length : 0;
+        const fuelUpper = (currentUser.fuelPreference || currentUser.fuel || 'CNG').toUpperCase();
+        const mileage = currentUser.vehicleMileage || currentUser.mileage || 25;
+        const avatarHtml = currentUser.avatar
+            ? `<img src="${currentUser.avatar}" alt="Avatar" class="user-avatar-mini" style="object-fit: cover; width:34px; height:34px; border-radius:50%;">`
+            : `<span class="user-avatar-mini">${initials}</span>`;
 
         authNavContainer.innerHTML = `
             <div class="dropdown">
                 <div class="user-profile-badge dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Click to view account">
-                    <span class="user-avatar-mini">${initials}</span>
+                    ${avatarHtml}
                     <span class="d-none d-sm-inline fw-bold">${currentUser.name}</span>
                 </div>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="min-width: 240px;">
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="min-width: 260px;">
                     <li>
-                        <h6 class="dropdown-header d-flex justify-content-between align-items-center">
-                            <span><i class="fas fa-user-check me-1 text-success"></i> Signed In</span>
-                            <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
-                        </h6>
+                        <div class="px-3 py-2 border-bottom">
+                            <div class="fw-bold text-dark">${currentUser.name}</div>
+                            <div class="small text-muted">${currentUser.email}</div>
+                            <div class="mt-1">
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">${fuelUpper} (${mileage} km/unit)</span>
+                                ${currentUser.role === 'admin' ? '<span class="badge bg-danger ms-1">Admin</span>' : ''}
+                            </div>
+                        </div>
                     </li>
-                    <li><span class="dropdown-item-text small text-muted text-truncate d-block" style="max-width: 210px;">${currentUser.email}</span></li>
-                    <li><span class="dropdown-item-text small fw-bold text-dark"><i class="fas fa-car me-1 text-primary"></i> ${fuelUpper} · ${mileage} km/unit</span></li>
-                    <li><hr class="dropdown-divider"></li>
                     <li>
-                        <a class="dropdown-item text-primary fw-semibold d-flex justify-content-between align-items-center" href="#" onclick="openSavedRoutesModal()">
-                            <span><i class="fas fa-bookmark me-2"></i>My Saved Trips</span>
-                            <span class="badge bg-primary rounded-pill" id="saved-count-badge">${savedCount}</span>
+                        <a class="dropdown-item py-2" href="#" onclick="openProfileModal()">
+                            <i class="fas fa-user-cog me-2 text-primary"></i> Edit Profile & Avatar
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item text-secondary small" href="#" onclick="toggleTheme()">
-                            <i class="fas fa-adjust me-2"></i>Toggle Dark / Light
+                        <a class="dropdown-item py-2" href="#" onclick="openSavedRoutesModal()">
+                            <i class="fas fa-bookmark me-2 text-primary"></i> My Saved Trips (<span id="saved-count-badge-menu">0</span>)
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item py-2" href="#" onclick="openSyllabusExplorerModal()">
+                            <i class="fas fa-graduation-cap me-2 text-warning"></i> Syllabus Demo Hub
                         </a>
                     </li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="#" onclick="logoutUser()"><i class="fas fa-sign-out-alt me-2"></i>Sign Out to Guest</a></li>
+                    <li>
+                        <a class="dropdown-item text-danger py-2" href="#" onclick="logoutUser()">
+                            <i class="fas fa-sign-out-alt me-2"></i> Log Out
+                        </a>
+                    </li>
                 </ul>
-            </div>
-        `;
+            </div>`;
     } else {
-        // Guest Mode State
+        // Guest State
         authNavContainer.innerHTML = `
             <div class="dropdown">
                 <div class="user-profile-badge dropdown-toggle guest-badge-glow" data-bs-toggle="dropdown" aria-expanded="false" title="Guest Mode Active - Click to Sign In">
                     <span class="user-avatar-mini guest-avatar-bg"><i class="fas fa-user"></i></span>
                     <span class="d-none d-sm-inline fw-bold">Guest Mode</span>
                 </div>
-                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="min-width: 230px;">
+                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="min-width: 250px;">
                     <li>
                         <h6 class="dropdown-header d-flex justify-content-between align-items-center">
                             <span><i class="fas fa-user-clock me-1 text-primary"></i> Guest Mode</span>
-                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Unlocked</span>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Active</span>
                         </h6>
                     </li>
-                    <li><span class="dropdown-item-text small text-muted">All route &amp; fuel tools active</span></li>
+                    <li><span class="dropdown-item-text small text-muted">All route & fuel calculations free</span></li>
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <a class="dropdown-item text-primary fw-bold" href="#" onclick="showAuthGateway('signin')">
-                            <i class="fas fa-sign-in-alt me-2"></i>Sign In / Register
+                            <i class="fas fa-sign-in-alt me-2"></i> Sign In / Register
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item text-secondary small" href="#" onclick="toggleTheme()">
-                            <i class="fas fa-adjust me-2"></i>Toggle Dark / Light
+                        <a class="dropdown-item" href="#" onclick="openSyllabusExplorerModal()">
+                            <i class="fas fa-graduation-cap me-2 text-warning"></i> Syllabus Demo Hub
                         </a>
                     </li>
-                    <li><hr class="dropdown-divider"></li>
                     <li>
                         <a class="dropdown-item text-secondary small" href="#" onclick="openSavedRoutesModal()">
-                            <i class="fas fa-bookmark me-2"></i>My Saved Trips <span class="badge bg-light text-muted border ms-1">Account</span>
+                            <i class="fas fa-bookmark me-2"></i> My Saved Trips
                         </a>
                     </li>
                 </ul>
-            </div>
-        `;
+            </div>`;
     }
 }
 
-function unlockApplication() {
-    const authGateway    = document.getElementById('auth-gateway-view');
-    const mainAppWrapper  = document.getElementById('main-app-wrapper');
+// ── Profile & Avatar Modal Handler ──────────────────────────────
+window.openProfileModal = () => {
+    if (!currentUser) return;
 
-    if (authGateway)    authGateway.style.display   = 'none';
-    if (mainAppWrapper) mainAppWrapper.style.display = 'block';
+    let modalEl = document.getElementById('userProfileModal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = 'userProfileModal';
+        modalEl.className = 'modal fade';
+        modalEl.tabIndex = -1;
+        modalEl.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden;">
+                    <div class="modal-header bg-dark text-white border-0 py-3">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fas fa-user-edit text-primary me-2"></i> My Profile & Vehicle Settings
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <!-- Avatar Section -->
+                        <div class="text-center mb-4">
+                            <div class="position-relative d-inline-block">
+                                <div id="modal-avatar-preview" class="rounded-circle d-flex align-items-center justify-content-center bg-primary text-white fw-bold shadow-sm" style="width: 80px; height: 80px; font-size: 32px; overflow: hidden; margin: 0 auto;">
+                                    ${currentUser.avatar ? `<img src="${currentUser.avatar}" style="width:100%; height:100%; object-fit:cover;">` : getUserInitials(currentUser.name)}
+                                </div>
+                                <label for="avatar-file-input" class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0 p-1 shadow" style="width: 28px; height: 28px; cursor: pointer;" title="Upload Avatar">
+                                    <i class="fas fa-camera" style="font-size: 12px;"></i>
+                                </label>
+                                <input type="file" id="avatar-file-input" accept="image/png,image/jpeg,image/webp" style="display: none;">
+                            </div>
+                            <div class="small text-muted mt-2">Click camera icon to upload profile picture (PNG, JPG, max 2MB)</div>
+                        </div>
+
+                        <!-- Profile Form -->
+                        <form id="profile-edit-form">
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-muted">Full Name</label>
+                                <input type="text" class="form-control" id="profile-name-input" value="${currentUser.name}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-muted">Email Address (Read-only)</label>
+                                <input type="email" class="form-control bg-light" value="${currentUser.email}" readonly>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold text-muted">Default Fuel</label>
+                                    <select class="form-select" id="profile-fuel-input">
+                                        <option value="cng" ${(currentUser.fuelPreference === 'cng' || currentUser.fuel === 'cng') ? 'selected' : ''}>CNG</option>
+                                        <option value="petrol" ${(currentUser.fuelPreference === 'petrol' || currentUser.fuel === 'petrol') ? 'selected' : ''}>Petrol</option>
+                                        <option value="diesel" ${(currentUser.fuelPreference === 'diesel' || currentUser.fuel === 'diesel') ? 'selected' : ''}>Diesel</option>
+                                    </select>
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold text-muted">Vehicle Mileage</label>
+                                    <input type="number" class="form-control" id="profile-mileage-input" value="${currentUser.vehicleMileage || currentUser.mileage || 24}" min="1" step="0.5">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary-custom w-100 py-2">
+                                <i class="fas fa-save me-2"></i> Save Profile Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>`;
+        document.body.appendChild(modalEl);
+
+        // Avatar file upload handler
+        document.getElementById('avatar-file-input')?.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                showToast('File too large. Maximum size is 2MB.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('avatar', file);
+
+            try {
+                showToast('Uploading profile picture...', 'info');
+                const res = await RouteWiseAPI.auth.uploadAvatar(formData);
+                if (res.success) {
+                    currentUser.avatar = res.avatar;
+                    localStorage.setItem('routeWiseUser', JSON.stringify(currentUser));
+                    const preview = document.getElementById('modal-avatar-preview');
+                    if (preview) {
+                        preview.innerHTML = `<img src="${res.avatar}" style="width:100%; height:100%; object-fit:cover;">`;
+                    }
+                    renderAuthNavbar();
+                    showToast('Avatar updated successfully!', 'success');
+                }
+            } catch (err) {
+                showToast(err.message || 'Avatar upload failed.', 'error');
+            }
+        });
+
+        // Profile form submit
+        document.getElementById('profile-edit-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('profile-name-input')?.value.trim();
+            const fuelPreference = document.getElementById('profile-fuel-input')?.value;
+            const vehicleMileage = parseFloat(document.getElementById('profile-mileage-input')?.value) || 24;
+
+            try {
+                const res = await RouteWiseAPI.auth.updateProfile({ name, fuelPreference, vehicleMileage });
+                if (res.success) {
+                    currentUser = { ...currentUser, ...res.user };
+                    localStorage.setItem('routeWiseUser', JSON.stringify(currentUser));
+                    renderAuthNavbar();
+                    bootstrap.Modal.getInstance(modalEl)?.hide();
+                    showToast('Profile updated successfully!', 'success');
+                }
+            } catch (err) {
+                showToast(err.message || 'Profile update failed.', 'error');
+            }
+        });
+    }
+
+    new bootstrap.Modal(modalEl).show();
+};
+
+// ── Logout ────────────────────────────────────────────────────────
+window.logoutUser = async () => {
+    try {
+        await RouteWiseAPI.auth.logout();
+    } catch (e) {
+        // Ignore logout errors
+    }
+    RouteWiseAPI.clearToken();
+    localStorage.removeItem('routeWiseUser');
+    currentUser = null;
+    renderAuthNavbar();
+    if (typeof refreshSavedRoutesForCurrentUser === 'function') {
+        refreshSavedRoutesForCurrentUser();
+    }
+    showToast('You have been logged out. Switched to Guest Mode.', 'info');
+};
+
+// ── Application Visibility Controls ──────────────────────────────
+function unlockApplication() {
+    const mainApp = document.getElementById('main-app-wrapper');
+    if (mainApp) mainApp.style.display = 'block';
+
+    const authGateway = document.getElementById('auth-gateway-view');
+    if (authGateway) authGateway.style.display = 'none';
 
     renderAuthNavbar();
 
-    if (currentUser) {
-        const fuelBtn = document.querySelector(`.fuel-btn[data-fuel="${currentUser.fuel}"]`);
-        if (fuelBtn) fuelBtn.click();
-
-        if (currentUser.mileage) {
-            const effInput = document.getElementById('fuel-efficiency');
-            if (effInput) effInput.value = currentUser.mileage;
-        }
+    if (typeof initializeMap === 'function') {
+        initializeMap();
     }
-
-    if (typeof initializeMap === 'function') initializeMap();
-    setTimeout(() => { if (typeof map !== 'undefined' && map) map.invalidateSize(); }, 200);
-    if (typeof updateSavedCountBadge === 'function') updateSavedCountBadge();
-    if (typeof initLandingSequence === 'function') initLandingSequence();
 }
 
-// ── Guest Mode ───────────────────────────────────────────────────
-window.enterGuestMode = () => {
-    currentUser = null;
-    localStorage.removeItem('routeWiseUser');
-    unlockApplication();
-};
-
-// ── Logout ───────────────────────────────────────────────────────
-window.logoutUser = () => {
-    currentUser = null;
-    localStorage.removeItem('routeWiseUser');
-    if (typeof refreshSavedRoutesForCurrentUser === 'function') refreshSavedRoutesForCurrentUser();
-
-    // Reset input fields
-    const signinEmail = document.getElementById('gateway-signin-email');
-    const signinPass  = document.getElementById('gateway-signin-password');
-    if (signinEmail) signinEmail.value = '';
-    if (signinPass)  signinPass.value  = '';
-
-    // Seamlessly transition to Guest Mode without blocking user
-    enterGuestMode();
-    showToast("Signed out. Switched to Guest Mode.", "info");
-};
-
-// ── Auth Gateway Controls ─────────────────────────────────────────
 window.showAuthGateway = (mode = 'signin') => {
+    setGatewayAuthMode(mode);
     const authGateway = document.getElementById('auth-gateway-view');
     if (authGateway) {
         authGateway.style.display = 'flex';
-        setGatewayAuthMode(mode);
+        authGateway.classList.add('active');
+        authGateway.scrollIntoView({ behavior: 'smooth' });
     }
 };
 
@@ -375,15 +544,20 @@ window.hideAuthGateway = () => {
     const authGateway = document.getElementById('auth-gateway-view');
     if (authGateway) {
         authGateway.style.display = 'none';
+        authGateway.classList.remove('active');
     }
 };
 
-// ── Guest Modal Helpers ───────────────────────────────────────────
+window.enterGuestMode = () => {
+    currentUser = null;
+    hideAuthGateway();
+    unlockApplication();
+    showToast('Guest Mode active: All routing and fuel calculators unlocked!', 'info');
+};
+
 window.handleGuestPromptSignIn = () => {
-    const modalEl = document.getElementById('guestSavePromptModal');
-    if (modalEl) {
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-    }
+    const promptModalEl = document.getElementById('guestSavePromptModal');
+    const modalInstance = bootstrap.Modal.getInstance(promptModalEl);
+    if (modalInstance) modalInstance.hide();
     showAuthGateway('signin');
 };

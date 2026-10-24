@@ -328,12 +328,28 @@ window.applyCityRates = (cityName) => {
     showToast(`Loaded ${cityObj.city} fuel prices (₹${price}) to Planner!`, 'success');
 };
 
+// ── Sync Fuel Rates from Express REST API ─────────────────────────
+async function syncFuelRatesFromAPI() {
+    try {
+        if (window.RouteWiseAPI) {
+            const res = await RouteWiseAPI.fuelRates.getAll();
+            if (res.success && Array.isArray(res.rates) && res.rates.length > 0) {
+                CITY_FUEL_RATES.length = 0;
+                res.rates.forEach(r => CITY_FUEL_RATES.push(r));
+                renderFuelRatesCards();
+            }
+        }
+    } catch (e) {
+        // Fallback to static reference rates
+    }
+}
+window.syncFuelRatesFromAPI = syncFuelRatesFromAPI;
+
 // ── Contact Form & Interactive Features ───────────────────────────
 window.selectContactTopic = function (topic, btnEl) {
     const subjectInput = document.getElementById('contact-subject');
     if (subjectInput) subjectInput.value = topic;
 
-    // Toggle active state on chips
     const allChips = document.querySelectorAll('#contact-topic-chips .topic-chip');
     allChips.forEach(chip => chip.classList.remove('active'));
     if (btnEl) btnEl.classList.add('active');
@@ -352,7 +368,6 @@ window.copySupportEmail = function (btn) {
     });
 };
 
-// Live character counter for message
 document.getElementById('contact-message')?.addEventListener('input', function (e) {
     const counter = document.getElementById('contact-char-count');
     if (counter) {
@@ -360,20 +375,49 @@ document.getElementById('contact-message')?.addEventListener('input', function (
     }
 });
 
-document.getElementById('contact-form')?.addEventListener('submit', (e) => {
+document.getElementById('contact-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const btn = document.getElementById('btn-submit-contact');
-    if (btn) { btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Sending...`; btn.disabled = true; }
+    const name = document.getElementById('contact-name')?.value.trim();
+    const email = document.getElementById('contact-email')?.value.trim();
+    const subject = document.getElementById('contact-subject')?.value.trim();
+    const message = document.getElementById('contact-message')?.value.trim();
+    const activeChip = document.querySelector('#contact-topic-chips .topic-chip.active');
+    const topic = activeChip ? activeChip.textContent.trim() : '✨ Feature Suggestion';
 
-    setTimeout(() => {
-        if (btn) { btn.innerHTML = `<i class="fas fa-check me-1"></i> Message Sent!`; btn.classList.replace('btn-primary-custom', 'btn-success-custom'); }
-        showToast('Thank you! Your message has been sent to the RouteWise team.', 'success');
+    if (btn) {
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span> Submitting to Server...`;
+        btn.disabled = true;
+    }
+
+    try {
+        if (window.RouteWiseAPI) {
+            const res = await RouteWiseAPI.feedback.submit({ name, email, subject, topic, message });
+            showToast(`Message received! Feedback Reference: #${String(res.feedbackId).slice(-6)}`, 'success');
+        } else {
+            showToast('Thank you! Your message has been recorded.', 'success');
+        }
+        if (btn) {
+            btn.innerHTML = `<i class="fas fa-check me-1"></i> Message Sent!`;
+            btn.classList.replace('btn-primary-custom', 'btn-success-custom');
+        }
         document.getElementById('contact-form')?.reset();
         const charCount = document.getElementById('contact-char-count');
         if (charCount) charCount.textContent = '0 / 500';
         setTimeout(() => {
-            if (btn) { btn.innerHTML = `<i class="fas fa-paper-plane me-1"></i> Send Message`; btn.classList.replace('btn-success-custom', 'btn-primary-custom'); btn.disabled = false; }
+            if (btn) {
+                btn.innerHTML = `<i class="fas fa-paper-plane me-1"></i> Send Message`;
+                btn.classList.replace('btn-success-custom', 'btn-primary-custom');
+                btn.disabled = false;
+            }
         }, 3000);
-    }, 900);
+    } catch (err) {
+        showToast(err.message || 'Failed to submit feedback.', 'error');
+        if (btn) {
+            btn.innerHTML = `<i class="fas fa-paper-plane me-1"></i> Send Message`;
+            btn.disabled = false;
+        }
+    }
 });
+
 

@@ -1,53 +1,87 @@
 /**
  * RouteWise — saved-routes.js
- * Save, load, delete and display bookmarked trips.
- * Guest Mode safe: prompts user when saving requires account login.
- * Depends on: utils.js, map.js (runRouteOptimization, renderIntermediateStops)
+ * Trip Bookmarks & Itineraries connected to MongoDB via Express REST API.
+ * Features:
+ * - Persistent CRUD via GET /api/trips, POST /api/trips, DELETE /api/trips/:id
+ * - Guest mode protection with account prompt
+ * - One-click load itinerary back into map & optimizer
+ * Depends on: api.js, utils.js, map.js
  */
 
 let pendingTripToSave = null;
+let savedRoutes = [];
 
-function getSavedRoutesStorageKey() {
-    const accountId = currentUser?.email?.trim().toLowerCase();
-    return accountId ? `routeWiseSavedRoutes:${accountId}` : null;
-}
-
-function loadSavedRoutesForCurrentUser() {
-    const storageKey = getSavedRoutesStorageKey();
-    if (!storageKey) return [];
+// ── Refresh Saved Routes from Backend REST API ────────────────────
+window.refreshSavedRoutesForCurrentUser = async () => {
+    if (!currentUser) {
+        savedRoutes = [];
+        updateSavedCountBadge();
+        return;
+    }
 
     try {
-        return JSON.parse(localStorage.getItem(storageKey)) || [];
-    } catch (e) {
-        return [];
+        const res = await RouteWiseAPI.trips.getAll({ limit: 50 });
+        if (res.success && Array.isArray(res.trips)) {
+            savedRoutes = res.trips;
+        } else {
+            savedRoutes = [];
+        }
+    } catch (err) {
+        console.warn('[SavedRoutes] Failed to fetch trips from API:', err.message);
+        // Fallback to local storage if API is unreachable
+        try {
+            const fallbackKey = `routeWiseSavedRoutes:${currentUser.email}`;
+            savedRoutes = JSON.parse(localStorage.getItem(fallbackKey)) || [];
+        } catch (e) {
+            savedRoutes = [];
+        }
     }
-}
 
-function persistSavedRoutes() {
-    const storageKey = getSavedRoutesStorageKey();
-    if (storageKey) localStorage.setItem(storageKey, JSON.stringify(savedRoutes));
-}
-
-let savedRoutes = loadSavedRoutesForCurrentUser();
-
-window.refreshSavedRoutesForCurrentUser = () => {
-    savedRoutes = loadSavedRoutesForCurrentUser();
     updateSavedCountBadge();
 };
 
 // ── Badge Counter ─────────────────────────────────────────────────
 function updateSavedCountBadge() {
     const badge = document.getElementById('saved-count-badge');
+    const badgeMenu = document.getElementById('saved-count-badge-menu');
     if (badge) badge.textContent = savedRoutes.length;
+    if (badgeMenu) badgeMenu.textContent = savedRoutes.length;
 }
 
-// ── Internal Helper to Persist a Trip Object ──────────────────────
-function saveTripData(tripObj) {
+// ── Save Current Trip via Backend REST API ────────────────────────
+async function saveTripData(tripObj) {
     if (!tripObj) return;
-    savedRoutes.unshift(tripObj);
-    persistSavedRoutes();
-    updateSavedCountBadge();
-    showToast(`Saved trip "${tripObj.title}" to your account!`, 'success');
+
+    try {
+        showToast('Saving trip to your account in MongoDB...', 'info');
+
+        const payload = {
+            title: tripObj.title,
+            origin: tripObj.origin,
+            destination: tripObj.destination,
+            stops: tripObj.stops || [],
+            distanceKm: tripObj.distance,
+            durationMinutes: tripObj.durationMinutes || 0,
+            fuelType: tripObj.fuelType || 'cng',
+            fuelEfficiency: tripObj.fuelEff || 25,
+            fuelPrice: tripObj.fuelPrice || 75.09,
+            totalCost: tripObj.cost,
+            fuelQuantity: tripObj.fuelQuantity || 0,
+            co2EmissionsKg: tripObj.co2EmissionsKg || 0,
+            cityName: tripObj.cityName || 'Reference',
+            comparison: tripObj.comparison || {}
+        };
+
+        const res = await RouteWiseAPI.trips.create(payload);
+
+        if (res.success && res.trip) {
+            savedRoutes.unshift(res.trip);
+            updateSavedCountBadge();
+            showToast(`Saved trip "${res.trip.title}" to your account!`, 'success');
+        }
+    } catch (err) {
+        showToast(err.message || 'Failed to save trip to server.', 'error');
+    }
 }
 
 // ── Process Pending Trip Saved from Guest Prompt ──────────────────
@@ -58,24 +92,31 @@ window.processPendingTripSave = () => {
     }
 };
 
-// ── Save Current Trip ─────────────────────────────────────────────
+// ── Save Current Trip Button Listener ─────────────────────────────
 document.getElementById('btn-save-current-route')?.addEventListener('click', () => {
     if (!currentTripResult) { 
         showToast('Please calculate a route first before saving.', 'warning'); 
         return; 
     }
 
+    const orderedStops = currentTripResult.orderedStops || [];
+    const originStop = orderedStops[0] || { name: 'Origin', lat: 0, lng: 0 };
+    const destStop = orderedStops[orderedStops.length - 1] || { name: 'Destination', lat: 0, lng: 0 };
+    const intermediateStopsList = orderedStops.slice(1, -1);
+
     const tripObj = {
-        id:        Date.now(),
-        title:     `${currentTripResult.origin} to ${currentTripResult.destination}`,
-        stops:     [...currentTripResult.orderedStops],
-        distance:  currentTripResult.distanceKm,
-        cost:      currentTripResult.userTripCost,
-        fuelType:  currentFuelType,
-        fuelEff:   parseFloat(document.getElementById('fuel-efficiency')?.value)  || 25,
+        title: `${currentTripResult.origin} to ${currentTripResult.destination}`,
+        origin: originStop,
+        destination: destStop,
+        stops: intermediateStopsList,
+        distance: currentTripResult.distanceKm,
+        durationMinutes: currentTripResult.durationMinutes || 0,
+        cost: currentTripResult.userTripCost,
+        fuelType: currentFuelType,
+        fuelEff: parseFloat(document.getElementById('fuel-efficiency')?.value)  || 25,
         fuelPrice: parseFloat(document.getElementById('fuel-price')?.value)        || 75.09,
-        cityName:  currentTripResult.selectedCityName || 'Reference (Delhi)',
-        date:      currentTripResult.date
+        cityName: currentTripResult.selectedCityName || 'Reference (Delhi)',
+        comparison: currentTripResult.comparison || {}
     };
 
     // If currently in Guest Mode, prompt for account sign in / register
@@ -96,7 +137,7 @@ document.getElementById('btn-save-current-route')?.addEventListener('click', () 
 });
 
 // ── Open Saved Trips Modal ────────────────────────────────────────
-window.openSavedRoutesModal = () => {
+window.openSavedRoutesModal = async () => {
     const listEl = document.getElementById('saved-routes-list-modal');
     if (!listEl) return;
 
@@ -110,7 +151,7 @@ window.openSavedRoutesModal = () => {
                 </div>
                 <h5 class="fw-bold text-dark mb-2">Guest Mode Active</h5>
                 <p class="text-muted small mb-4" style="max-width: 440px; margin: 0 auto;">
-                    You are exploring in <strong>Guest Mode</strong>. Saved trips are stored securely in user accounts so you can access and load them across sessions.
+                    You are exploring in <strong>Guest Mode</strong>. Saved trips are securely stored in MongoDB under user accounts so you can access them across sessions and devices.
                 </p>
                 <div class="d-flex justify-content-center gap-2 flex-wrap">
                     <button class="btn btn-sm btn-primary px-3 py-2 fw-semibold" onclick="bootstrap.Modal.getInstance(document.getElementById('savedRoutesModal'))?.hide(); showAuthGateway('signin');">
@@ -122,70 +163,126 @@ window.openSavedRoutesModal = () => {
         return;
     }
 
-    listEl.innerHTML = savedRoutes.length === 0
-        ? `<p class="text-muted text-center my-4"><i class="fas fa-bookmark fa-2x mb-2 text-secondary opacity-50 d-block"></i>No saved trips yet. Calculate a route and click "Save Trip"!</p>`
-        : '';
+    listEl.innerHTML = `
+        <div class="text-center py-3 text-muted">
+            <i class="fas fa-spinner fa-spin me-2"></i> Loading saved journeys from database...
+        </div>`;
+    new bootstrap.Modal(document.getElementById('savedRoutesModal')).show();
 
+    // Fetch latest from API
+    await refreshSavedRoutesForCurrentUser();
+
+    if (savedRoutes.length === 0) {
+        listEl.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <i class="fas fa-bookmark fa-2x mb-2 text-secondary opacity-50 d-block"></i>
+                <h6 class="fw-bold text-dark">No Saved Trips Found</h6>
+                <p class="small text-muted mb-0">Plan a journey in the Route Planner and click <strong>"Save Trip"</strong> to bookmark it to your MongoDB database!</p>
+            </div>`;
+        return;
+    }
+
+    listEl.innerHTML = '';
     savedRoutes.forEach((route, i) => {
         const div = document.createElement('div');
-        div.className = 'p-3 border rounded-3 mb-2 bg-light d-flex justify-content-between align-items-center flex-wrap gap-2';
+        div.className = 'p-3 border rounded-3 mb-2 bg-light d-flex justify-content-between align-items-center flex-wrap gap-2 hover-shadow transition';
+        const stopsCount = (route.stops ? route.stops.length : 0) + 2;
+        const fuelUpper = (route.fuelType || 'CNG').toUpperCase();
+        const costVal = route.totalCost !== undefined ? route.totalCost : route.cost;
+        const distVal = route.distanceKm !== undefined ? route.distanceKm : route.distance;
+        const tripDate = route.createdAt ? new Date(route.createdAt).toLocaleDateString() : (route.date || 'Recent');
+
         div.innerHTML = `
             <div>
-                <h6 class="fw-bold mb-1 text-primary"><i class="fas fa-map-marker-alt me-1"></i> ${route.title}</h6>
-                <small class="text-muted">${route.stops.length} places &bull; ${route.distance.toFixed(1)} km &bull; &#8377;${route.cost.toFixed(0)} &bull; ${route.fuelType ? route.fuelType.toUpperCase() : 'CNG'} &bull; Saved ${route.date}</small>
+                <h6 class="fw-bold mb-1 text-primary">
+                    <i class="fas fa-map-marker-alt me-1"></i> ${route.title}
+                </h6>
+                <small class="text-muted">
+                    ${stopsCount} places &bull; ${distVal.toFixed(1)} km &bull; ₹${costVal.toFixed(0)} &bull; 
+                    <span class="badge bg-secondary-subtle text-dark border">${fuelUpper}</span> &bull; 
+                    Saved ${tripDate}
+                </small>
             </div>
             <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-primary"        onclick="loadSavedRoute(${i})">  <i class="fas fa-external-link-alt me-1"></i> Load Route</button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteSavedRoute(${i})"><i class="fas fa-trash"></i></button>
+                <button class="btn btn-sm btn-primary" onclick="loadSavedRoute(${i})">
+                    <i class="fas fa-external-link-alt me-1"></i> Load Route
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteSavedRoute('${route._id || i}', ${i})">
+                    <i class="fas fa-trash"></i>
+                </button>
             </div>`;
         listEl.appendChild(div);
     });
-
-    new bootstrap.Modal(document.getElementById('savedRoutesModal')).show();
 };
 
 document.getElementById('btn-show-saved-routes')?.addEventListener('click', openSavedRoutesModal);
 
-// ── Load Saved Route ──────────────────────────────────────────────
+// ── Load Saved Route into Planner & Map ───────────────────────────
 window.loadSavedRoute = (index) => {
     const route = savedRoutes[index];
     if (!route) return;
 
-    document.getElementById('origin-city-input').value = route.stops[0].name;
-    document.getElementById('dest-city-input').value   = route.stops[route.stops.length - 1].name;
-    intermediateStops = route.stops.slice(1, -1);
+    const originName = route.origin ? route.origin.name : (route.stops && route.stops[0] ? route.stops[0].name : 'Delhi');
+    const destName = route.destination ? route.destination.name : (route.stops && route.stops[route.stops.length - 1] ? route.stops[route.stops.length - 1].name : 'Mumbai');
+
+    const originInput = document.getElementById('origin-city-input');
+    const destInput = document.getElementById('dest-city-input');
+    if (originInput) originInput.value = originName;
+    if (destInput) destInput.value = destName;
+
+    intermediateStops = (route.stops && Array.isArray(route.stops))
+        ? (route.origin ? [...route.stops] : route.stops.slice(1, -1))
+        : [];
+
     renderIntermediateStops();
 
-    // Fix #6 — restore fuel type, efficiency and price from saved trip
     if (route.fuelType) {
         const fuelBtn = document.querySelector(`.fuel-btn[data-fuel="${route.fuelType}"]`);
         if (fuelBtn) fuelBtn.click();
     }
-    if (route.fuelEff) {
+    const eff = route.fuelEfficiency || route.fuelEff;
+    if (eff) {
         const effInput = document.getElementById('fuel-efficiency');
-        if (effInput) effInput.value = route.fuelEff;
+        if (effInput) effInput.value = eff;
     }
-    if (route.fuelPrice) {
+    const price = route.fuelPrice;
+    if (price) {
         const priceInput = document.getElementById('fuel-price');
-        if (priceInput) priceInput.value = route.fuelPrice;
+        if (priceInput) priceInput.value = price;
     }
 
     const modalEl = document.getElementById('savedRoutesModal');
-    const modal   = bootstrap.Modal.getInstance(modalEl);
+    const modal = bootstrap.Modal.getInstance(modalEl);
     if (modal) modal.hide();
 
     switchTab('optimizer');
-    runRouteOptimization();
+    setTimeout(() => {
+        if (typeof runRouteOptimization === 'function') {
+            runRouteOptimization();
+        }
+    }, 200);
+
     showToast(`Loaded "${route.title}" to planner!`, 'success');
 };
 
-// Fix #10 — Confirm before deleting a saved trip
-window.deleteSavedRoute = (index) => {
-    const title = savedRoutes[index]?.title || 'this trip';
-    if (!confirm(`Remove "${title}" from your saved trips?`)) return;
-    savedRoutes.splice(index, 1);
-    persistSavedRoutes();
-    updateSavedCountBadge();
-    openSavedRoutesModal();
-    showToast('Trip removed from saved list', 'info');
+// ── Delete Saved Trip with Confirmation ───────────────────────────
+window.deleteSavedRoute = async (tripId, localIndex) => {
+    const route = savedRoutes[localIndex];
+    const title = route?.title || 'this trip';
+
+    if (!confirm(`Are you sure you want to permanently delete "${title}"?`)) {
+        return;
+    }
+
+    try {
+        if (route && route._id && !String(route._id).startsWith('mem_')) {
+            await RouteWiseAPI.trips.delete(route._id);
+        }
+        savedRoutes.splice(localIndex, 1);
+        updateSavedCountBadge();
+        openSavedRoutesModal();
+        showToast('Trip removed from database.', 'info');
+    } catch (err) {
+        showToast(err.message || 'Failed to delete trip.', 'error');
+    }
 };

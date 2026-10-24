@@ -1,0 +1,1095 @@
+/*
+   ================================================================
+   RouteWise — Fuel Comparison, City Rates Table, About
+   ================================================================
+*/
+
+/* ── Section intros ───────────────────────────────────────────── */
+#view-comparison h2,
+#view-about h2 { letter-spacing: -0.05em; }
+
+/* ── Comparison hero: modern dark gradient panel ─────────────── */
+.comp-hero {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 20px;
+    padding: 26px 24px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+    color: #fff;
+    border-radius: 16px;
+}
+.comp-hero h2 { color: #fff; font-weight: 800; font-size: clamp(24px, 3.2vw, 32px); }
+.comp-hero .text-light { color: #cbd5e1 !important; font-size: 14.5px; }
+.comp-hero .badge.bg-success {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #6ee7b7 !important;
+    border: 1px solid rgba(16, 185, 129, 0.4) !important;
+    font-size: 11px !important;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 5px 12px;
+}
+.comp-hero .btn-light {
+    border: 1px solid #fff;
+    font-size: 13.5px;
+    font-weight: 800;
+    padding: 9px 18px;
+    transition: all 0.2s ease;
+}
+.comp-hero .btn-light:hover {
+    background: #fff;
+    color: var(--blue);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 14px rgba(255, 255, 255, 0.3);
+}
+
+/* ── Fuel overview cards ──────────────────────────────────────── */
+.fuel-overview {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 4px solid var(--strong);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.fuel-overview:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+.fuel-overview-petrol { border-top-color: #e11d48; }
+.fuel-overview-diesel { border-top-color: #0284c7; }
+.fuel-overview-cng    { border-top-color: #10b981; }
+
+#view-comparison .glass-card h3 {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+}
+#view-comparison .glass-card h3 .fs-6 {
+    font-family: var(--sans);
+    font-size: 13px !important;
+    color: var(--muted) !important;
+    font-weight: 600;
+}
+#view-comparison .glass-card .bg-light {
+    padding: 14px !important;
+    background: #f8fafc !important;
+    border: 1px solid var(--line) !important;
+}
+#view-comparison .glass-card .bg-light strong { font-family: var(--mono); font-weight: 800; }
+
+/* ── Simulator bar labels ─────────────────────────────────────── */
+#view-comparison .progress { height: 14px !important; }
+
+/* ── City Fuel Rates – Hero Header ─────────────────────────────── */
+.rates-hero-header {
+    position: relative;
+    padding: 36px 32px 30px;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    color: #fff;
+    margin-bottom: 0;
+    overflow: hidden;
+}
+.rates-hero-glow {
+    position: absolute;
+    top: -60px; right: -40px;
+    width: 260px; height: 260px;
+    background: radial-gradient(circle, rgba(16,185,129,0.22), transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: ratesGlowPulse 4s ease-in-out infinite;
+}
+@keyframes ratesGlowPulse {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.15); }
+}
+.rates-hero-content { position: relative; z-index: 1; }
+.rates-hero-title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    margin: 6px 0 8px;
+    color: #fff;
+}
+.rates-hero-subtitle {
+    max-width: 600px;
+    color: #98a2b3;
+    font-size: 13px;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ── Insight Strip ────────────────────────────────────────────── */
+.rates-insight-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    padding: 18px 0;
+    margin-bottom: 4px;
+}
+@media (max-width: 768px) {
+    .rates-insight-strip { grid-template-columns: repeat(2, 1fr); }
+}
+.insight-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    transition: all 0.25s ease;
+}
+.insight-card:hover {
+    border-color: var(--strong);
+    box-shadow: 0 8px 24px rgba(15,23,42,0.08);
+    transform: translateY(-2px);
+}
+.insight-icon {
+    width: 42px; height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    background: rgba(225,29,72,0.1);
+    color: #e11d48;
+}
+.insight-cheapest .insight-icon:first-child {
+    background: rgba(16,185,129,0.12);
+    color: #10b981;
+}
+.insight-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+}
+.insight-value {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    margin-top: 1px;
+}
+
+/* ── Search Bar ───────────────────────────────────────────────── */
+.rates-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.rates-search-input-wrap {
+    flex: 1;
+    position: relative;
+}
+.rates-search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 13px;
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+.rates-search-input {
+    width: 100%;
+    padding: 12px 16px 12px 40px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 13.5px;
+    outline: none;
+    transition: all 0.25s ease;
+}
+.rates-search-input:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+.rates-search-input:focus ~ .rates-search-icon,
+.rates-search-input-wrap:focus-within .rates-search-icon {
+    color: var(--blue);
+}
+.rates-city-count {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: var(--alt);
+    border: 1px solid var(--line);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+/* ── Horizontal Card Slider Container ─────────────────────────── */
+.rates-slider-container {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: 8px;
+}
+
+/* Navigation Arrows */
+.rates-slider-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 16px rgba(15,23,42,0.10);
+    opacity: 0;
+    pointer-events: none;
+}
+.rates-slider-container:hover .rates-slider-arrow {
+    opacity: 1;
+    pointer-events: all;
+}
+.rates-slider-arrow:hover {
+    background: var(--blue);
+    color: #fff;
+    border-color: var(--blue);
+    box-shadow: 0 6px 20px rgba(37,99,235,0.25);
+    transform: translateY(-50%) scale(1.08);
+}
+.rates-slider-arrow:active {
+    transform: translateY(-50%) scale(0.95);
+}
+.rates-arrow-left  { left: -8px; }
+.rates-arrow-right { right: -8px; }
+.rates-slider-arrow.arrow-hidden { opacity: 0 !important; pointer-events: none !important; }
+
+/* The horizontal scrolling track */
+.rates-card-slider {
+    display: flex;
+    gap: 18px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 4px 16px;
+    cursor: grab;
+    /* Hide native scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.rates-card-slider::-webkit-scrollbar { display: none; }
+.rates-card-slider:active { cursor: grabbing; }
+
+/* Scroll Position Indicator */
+.rates-scroll-indicator {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 4px 20px;
+}
+.rates-scroll-track {
+    flex: 1;
+    height: 4px;
+    background: var(--alt);
+    border: 1px solid var(--line);
+    position: relative;
+    overflow: hidden;
+}
+.rates-scroll-thumb {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 20%;
+    background: linear-gradient(90deg, var(--blue), #10b981);
+    transition: left 0.15s ease, width 0.15s ease;
+}
+.rates-drag-hint {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    opacity: 0.7;
+    animation: hintPulse 2.5s ease-in-out infinite;
+}
+@keyframes hintPulse {
+    0%, 100% { opacity: 0.5; }
+    50%      { opacity: 1; }
+}
+
+/* ── Individual Fuel Rate Card (Slider Item) ──────────────────── */
+.fuel-rate-card {
+    flex: 0 0 340px;
+    min-width: 340px;
+    max-width: 340px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    padding: 0;
+    overflow: hidden;
+    scroll-snap-align: start;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateX(40px) scale(0.96);
+    animation: rateCardSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes rateCardSlideIn {
+    to { opacity: 1; transform: translateX(0) scale(1); }
+}
+/* Search filter exit animation */
+.fuel-rate-card.card-exit {
+    animation: rateCardSlideOut 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+@keyframes rateCardSlideOut {
+    to { opacity: 0; transform: translateX(-30px) scale(0.92); }
+}
+
+.fuel-rate-card:hover {
+    border-color: var(--blue);
+    box-shadow: 0 12px 32px rgba(37,99,235,0.12);
+    transform: translateY(-6px) scale(1.02);
+}
+.fuel-rate-card:hover .frc-accent { transform: scaleX(1); }
+
+/* Accent bar at top */
+.frc-accent {
+    height: 3px;
+    background: linear-gradient(90deg, #2563eb, #10b981);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.frc-body { padding: 18px 20px 16px; }
+
+/* City header row */
+.frc-city-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+.frc-city-info { display: flex; align-items: center; gap: 12px; }
+.frc-city-avatar {
+    width: 40px; height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--alt);
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--blue);
+    flex-shrink: 0;
+}
+.frc-city-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.2;
+}
+.frc-city-state {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+}
+.frc-trend-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border: 1px solid var(--line);
+    background: var(--alt);
+    color: var(--muted);
+}
+.frc-trend-badge.trend-up {
+    background: #fef2f2;
+    border-color: #fecdd3;
+    color: #e11d48;
+}
+.frc-trend-badge.trend-stable {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #059669;
+}
+
+/* Fuel price rows */
+.frc-fuel-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+
+.frc-fuel-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.frc-fuel-dot {
+    width: 8px; height: 8px;
+    flex-shrink: 0;
+}
+.frc-fuel-dot.dot-petrol { background: #e11d48; }
+.frc-fuel-dot.dot-diesel { background: #0284c7; }
+.frc-fuel-dot.dot-cng    { background: #10b981; }
+
+.frc-fuel-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    width: 48px;
+    flex-shrink: 0;
+}
+.frc-fuel-bar-wrap {
+    flex: 1;
+    height: 6px;
+    background: var(--alt);
+    overflow: hidden;
+    position: relative;
+}
+.frc-fuel-bar {
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.frc-fuel-bar.bar-petrol { background: linear-gradient(90deg, #e11d48, #f43f5e); }
+.frc-fuel-bar.bar-diesel { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+.frc-fuel-bar.bar-cng    { background: linear-gradient(90deg, #059669, #34d399); }
+
+.frc-fuel-price {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink);
+    min-width: 72px;
+    text-align: right;
+}
+
+/* Apply button */
+.frc-apply-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background: var(--alt);
+    color: var(--blue);
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.frc-apply-btn:hover {
+    background: var(--blue);
+    color: #fff;
+}
+.frc-apply-btn i { font-size: 11px; }
+
+/* Empty state */
+.rates-empty-state {
+    min-width: 100%;
+    flex-shrink: 0;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+}
+.rates-empty-state i {
+    font-size: 40px;
+    opacity: 0.3;
+    margin-bottom: 12px;
+    display: block;
+}
+.rates-empty-state p {
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Responsive: smaller cards on mobile */
+@media (max-width: 480px) {
+    .fuel-rate-card {
+        flex: 0 0 290px;
+        min-width: 290px;
+        max-width: 290px;
+    }
+}
+
+
+/* ── About ────────────────────────────────────────────────────── */
+.about-hero-card {
+    padding: 30px 26px;
+    background: var(--ink);
+    border-radius: 0;
+    box-shadow: none;
+    color: #fff;
+}
+.about-hero-card h2 { color: #fff; }
+.about-hero-card .text-light { color: #98a2b3 !important; }
+.about-hero-card .badge.bg-primary {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #93c5fd !important;
+    border-radius: 0 !important;
+    font-size: 10px !important;
+    letter-spacing: 0.09em;
+}
+
+.dev-avatar-large {
+    width: 76px;
+    height: 76px;
+    display: inline-grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: none;
+    color: #fff;
+    font-size: 32px;
+    font-weight: 400;
+}
+
+.skill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 9px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 0;
+    background: rgba(255, 255, 255, 0.05);
+    color: #e5e7eb;
+    font-size: 11px;
+    font-weight: 600;
+    transition: var(--transition-fast);
+}
+.skill-tag i { opacity: 0.85; }
+.skill-tag:hover { background: rgba(255, 255, 255, 0.12); color: #fff; transform: none; }
+
+.about-hero-card .social-icon-btn {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.05);
+    color: #e5e7eb;
+}
+.about-hero-card .social-icon-btn:hover { background: #fff; border-color: #fff; color: var(--ink); }
+
+/* ── Contact form ─────────────────────────────────────────────── */
+#contact-form textarea.form-control { min-height: 84px; resize: vertical; }
+/* ── About Section & Hero Stats ────────────────────────────────── */
+.about-hero-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    color: #ffffff;
+    padding: 2.5rem 2rem;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.about-hero-card::after {
+    content: '';
+    position: absolute;
+    top: -50px; right: -50px;
+    width: 220px; height: 220px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.2), transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.dev-avatar-large {
+    width: 90px; height: 90px;
+    background: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 2.2rem;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+    border: 2px solid rgba(255,255,255,0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.dev-avatar-large:hover {
+    transform: scale(1.08) rotate(-4deg);
+    box-shadow: 0 14px 30px rgba(16, 185, 129, 0.4);
+}
+
+.about-stat-chip {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(4px);
+    transition: all 0.2s ease;
+}
+.about-stat-chip:hover {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+.about-stat-num {
+    font-family: var(--mono);
+    font-size: 15px;
+    font-weight: 800;
+    color: #6ee7b7;
+}
+.about-stat-txt {
+    font-size: 11px;
+    color: #cbd5e1;
+    font-weight: 500;
+}
+
+/* Feature Pillars Grid with Distinct Top Accents */
+.feature-pillar-card {
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+    background: var(--surface);
+}
+.feature-pillar-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 3.5px;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s ease;
+}
+.pillar-blue::before    { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+.pillar-emerald::before { background: linear-gradient(90deg, #059669, #34d399); }
+.pillar-amber::before   { background: linear-gradient(90deg, #d97706, #fbbf24); }
+.pillar-cyan::before    { background: linear-gradient(90deg, #0284c7, #38bdf8); }
+
+.feature-pillar-card:hover::before { transform: scaleX(1); }
+.feature-pillar-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 28px rgba(15,23,42,0.08);
+    border-color: #cbd5e1;
+}
+.feature-pillar-card:hover .feature-pillar-icon {
+    transform: scale(1.15) rotate(-6deg);
+}
+
+.feature-pillar-icon {
+    width: 44px; height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.icon-blue    { background: #eff6ff; color: #2563eb; }
+.icon-emerald { background: #ecfdf5; color: #10b981; }
+.icon-amber   { background: #fef6ec; color: #c97700; }
+.icon-rose    { background: #fff1f2; color: #e11d48; }
+.icon-cyan    { background: #f0f9ff; color: #0284c7; }
+
+/* ── Contact Section Interactive Styling ───────────────────────── */
+.contact-interactive-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    transition: all 0.3s ease;
+}
+
+.support-box-interactive {
+    background: var(--alt);
+    border: 1px solid var(--line) !important;
+    transition: all 0.25s ease;
+}
+.support-box-interactive:hover {
+    background: var(--surface);
+    border-color: var(--blue) !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
+}
+
+.support-avatar-glow {
+    background: linear-gradient(135deg, #2563eb, #059669);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    transition: transform 0.3s ease;
+}
+.support-box-interactive:hover .support-avatar-glow {
+    transform: scale(1.08) rotate(-4deg);
+}
+
+.btn-copy-email {
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-copy-email:hover {
+    background: var(--blue);
+    border-color: var(--blue);
+    color: #fff;
+    transform: scale(1.06);
+}
+.btn-copy-email:active {
+    transform: scale(0.94);
+}
+
+/* Social Media Buttons with Brand Colors */
+.social-icon-btn {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 14px;
+    text-decoration: none;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.social-github:hover {
+    background: #181717;
+    border-color: #181717;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transform: translateY(-3px);
+}
+.social-linkedin:hover {
+    background: #0a66c2;
+    border-color: #0a66c2;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(10, 102, 194, 0.3);
+    transform: translateY(-3px);
+}
+.social-email:hover {
+    background: #059669;
+    border-color: #059669;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    transform: translateY(-3px);
+}
+
+/* ── Interactive Quick Topic Chips ────────────────────────────── */
+.topic-chip {
+    padding: 6px 14px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+.topic-chip:hover {
+    border-color: var(--blue);
+    background: #eff6ff;
+    color: var(--blue);
+    transform: translateY(-1px);
+}
+.topic-chip.active {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border-color: #1d4ed8;
+    color: #ffffff;
+    box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+}
+
+/* Input with icon styling */
+.input-icon-wrap {
+    position: relative;
+}
+.input-icon-inner {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 12px;
+    pointer-events: none;
+    transition: color 0.2s ease;
+}
+.input-icon-wrap .form-control {
+    padding-left: 34px !important;
+    transition: all 0.25s ease;
+}
+.input-icon-wrap .form-control:focus + .input-icon-inner,
+.input-icon-wrap:focus-within .input-icon-inner {
+    color: var(--blue);
+}
+
+/* ── Story & Community Support / Contact Section ─────────────── */
+.contact-interactive-wrapper {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%) !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 20px !important;
+    padding: 32px !important;
+    box-shadow: 0 6px 24px rgba(15, 23, 42, 0.05);
+}
+
+/* Left side blends seamlessly into the section background */
+.creator-note-panel {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 10px 16px !important;
+    transition: all 0.25s ease;
+}
+
+/* Right side feedback form stands out as the clean white card */
+.contact-form-container {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 16px !important;
+    box-shadow: 0 10px 32px rgba(15, 23, 42, 0.08) !important;
+    padding: 28px !important;
+    transition: all 0.25s ease;
+}
+.contact-form-container:hover {
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.12) !important;
+}
+
+.creator-note-panel .support-box-interactive {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 14px !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05);
+}
+.creator-note-panel .support-box-interactive:hover {
+    border-color: var(--blue) !important;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.15);
+}
+
+.creator-note-panel .social-icon-btn {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+}
+
+.contact-interactive-btn {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em;
+    padding: 12px 22px !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3) !important;
+    transition: all 0.25s ease !important;
+}
+.contact-interactive-btn:hover {
+    background: linear-gradient(135deg, #1d4ed8, #0f172a) !important;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45) !important;
+    transform: translateY(-2px);
+    color: #ffffff !important;
+}
+.contact-interactive-btn:active {
+    transform: translateY(0) scale(0.98);
+}
+
+/* ── Dark Mode Overrides for Sections (Comparison, Rates, About) ── */
+[data-theme="dark"] .fuel-overview {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+[data-theme="dark"] .fuel-overview:hover {
+    background: #131d35;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .insight-card {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+[data-theme="dark"] .insight-card:hover {
+    background: #131d35;
+    border-color: #38bdf8;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
+}
+[data-theme="dark"] .insight-val {
+    color: #f8fafc;
+}
+[data-theme="dark"] .insight-txt {
+    color: #94a3b8;
+}
+
+[data-theme="dark"] .rates-search-input {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+[data-theme="dark"] .rates-search-input:focus {
+    background: #0f172a;
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+[data-theme="dark"] .rates-city-count {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-theme="dark"] .rates-slider-arrow {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+[data-theme="dark"] .rates-slider-arrow:hover {
+    background: #2563eb;
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .fuel-rate-card {
+    background: #0f172a;
+    border-color: #334155;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    color: #f8fafc;
+}
+[data-theme="dark"] .fuel-rate-card:hover {
+    background: #131e35;
+    border-color: #38bdf8;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+}
+
+[data-theme="dark"] .frc-city-name {
+    color: #f8fafc;
+}
+[data-theme="dark"] .frc-city-avatar {
+    background: #1e293b;
+    color: #38bdf8;
+}
+[data-theme="dark"] .frc-trend-badge {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+[data-theme="dark"] .frc-trend-badge.trend-up {
+    background: rgba(225, 29, 72, 0.15);
+    border-color: rgba(225, 29, 72, 0.35);
+    color: #f43f5e;
+}
+[data-theme="dark"] .frc-trend-badge.trend-stable {
+    background: rgba(5, 150, 105, 0.15);
+    border-color: rgba(5, 150, 105, 0.35);
+    color: #34d399;
+}
+
+[data-theme="dark"] .frc-fuel-bar-wrap {
+    background: #1e293b;
+}
+[data-theme="dark"] .frc-fuel-price {
+    color: #f8fafc;
+}
+[data-theme="dark"] .frc-apply-btn {
+    background: #1e293b;
+    color: #38bdf8;
+}
+[data-theme="dark"] .frc-apply-btn:hover {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+[data-theme="dark"] .rates-scroll-track {
+    background: #1e293b;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .feature-pillar-card {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f8fafc;
+}
+[data-theme="dark"] .feature-pillar-card:hover {
+    background: #131d35;
+    border-color: #38bdf8;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+}
+[data-theme="dark"] .feature-pillar-card h6 {
+    color: #f8fafc !important;
+}
+[data-theme="dark"] .feature-pillar-card p {
+    color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .icon-blue    { background: rgba(37, 99, 235, 0.2); color: #60a5fa; }
+[data-theme="dark"] .icon-emerald { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+[data-theme="dark"] .icon-amber   { background: rgba(217, 119, 6, 0.2); color: #fbbf24; }
+[data-theme="dark"] .icon-rose    { background: rgba(225, 29, 72, 0.2); color: #f43f5e; }
+[data-theme="dark"] .icon-cyan    { background: rgba(2, 132, 199, 0.2); color: #38bdf8; }
+
+[data-theme="dark"] .topic-chip {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+[data-theme="dark"] .topic-chip:hover {
+    background: #334155;
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+[data-theme="dark"] .topic-chip.active {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    border-color: #3b82f6;
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45);
+}
+
+[data-theme="dark"] .contact-interactive-wrapper {
+    background: linear-gradient(135deg, #0f172a 0%, #090d16 100%) !important;
+    border-color: #334155 !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .contact-form-container {
+    background: #0f172a !important;
+    border-color: #334155 !important;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .creator-note-panel .support-box-interactive {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+[data-theme="dark"] .creator-note-panel .support-box-interactive:hover {
+    background: #131e35 !important;
+    border-color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .creator-note-panel .social-icon-btn {
+    background: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+[data-theme="dark"] .creator-note-panel .social-icon-btn:hover {
+    background: #2563eb;
+    border-color: #38bdf8;
+    color: #ffffff;
+}
+
+
+
+

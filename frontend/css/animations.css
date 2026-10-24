@@ -1,0 +1,126 @@
+/*
+   ================================================================
+   RouteWise — Post-Login Transition Overlay & Keyframes
+   ================================================================
+*/
+
+@keyframes roadMove   { 0% { background-position: 0 0; }   100% { background-position: -200px 0; } }
+@keyframes carBounce  { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes wheelRotate { 0% { transform: rotate(0deg); }  100% { transform: rotate(360deg); } }
+@keyframes smokePuff  { 0% { opacity: 0.7; transform: translate(0, 0) scale(0.6); } 100% { opacity: 0; transform: translate(-40px, -15px) scale(1.6); } }
+
+#car-transition-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99999;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #0f172a !important;
+    color: #ffffff !important;
+    /* Same plotting grid as the sign-in canvas. */
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+    background-size: 42px 42px;
+}
+#car-transition-overlay.active {
+    display: flex;
+    animation: fadeIn 0.25s ease-out;
+}
+
+.car-anim-scene {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.anim-road {
+    position: relative;
+    width: 100%;
+    height: 34px;
+    overflow: hidden;
+    background: #1f2a3a;
+    border-top: 1px solid #3d4c62;
+    border-bottom: 1px solid #0b1220;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.anim-road-stripes {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 200%;
+    height: 2px;
+    background-image: repeating-linear-gradient(90deg, #667085, #667085 30px, transparent 30px, transparent 60px);
+    animation: roadMove 0.45s linear infinite;
+}
+
+.anim-car-vehicle {
+    position: absolute;
+    bottom: 26px;
+    left: 42%;
+    animation: carBounce 0.4s ease-in-out infinite;
+    filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.5));
+}
+
+.car-svg-icon { width: 128px; height: auto; }
+
+.car-wheel {
+    transform-origin: center;
+    animation: wheelRotate 0.35s linear infinite;
+}
+
+.car-exhaust-smoke {
+    position: absolute;
+    bottom: 32px;
+    left: 36%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: rgba(203, 213, 225, 0.45);
+    animation: smokePuff 0.6s infinite;
+}
+
+.anim-status-box {
+    margin-top: 30px;
+    text-align: center;
+    color: #fff;
+}
+#car-anim-title {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #fff;
+}
+#car-anim-subtitle {
+    color: #98a2b3 !important;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.02em;
+}
+
+.anim-progress-bar {
+    width: 260px;
+    height: 3px;
+    margin: 16px auto 0;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 0;
+}
+.anim-progress-fill {
+    width: 0%;
+    height: 100%;
+    background: var(--blue);
+    transition: width 2s cubic-bezier(0.4, 0, 0.2, 1);
+}
