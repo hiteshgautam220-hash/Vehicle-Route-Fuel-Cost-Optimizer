@@ -9,9 +9,9 @@
 // ============================================================================
 // When your backend is deployed (e.g., on Render or Railway), paste your live
 // deployed backend URL below (without trailing slash):
-// Example: const DEPLOYED_BACKEND_URL = 'https://vehicle-cost-optimizer.onrender.com';
+// Example: const DEPLOYED_BACKEND_URL = 'https://vehicle-route-fuel-cost-optimizer.onrender.com';
 // Leave empty ('') when running both frontend & backend locally on localhost:5000.
-const DEPLOYED_BACKEND_URL = '';
+const DEPLOYED_BACKEND_URL = 'https://vehicle-route-fuel-cost-optimizer.onrender.com';
 
 const API_BASE_URL = (() => {
     // 1. If running on local Express server on port 5000: use relative path
