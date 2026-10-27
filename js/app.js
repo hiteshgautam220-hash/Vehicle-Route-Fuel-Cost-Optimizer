@@ -27,6 +27,11 @@ async function initApp() {
         updateFuelSimulator();
     }
 
+    // 4b. Initialize landing page hero map & proof counters
+    if (typeof initLandingSequence === 'function') {
+        initLandingSequence();
+    }
+
     // 5. Trigger initial car drive-in loading screen & session restoration
     const storedUser = typeof getStoredSessionUser === 'function' ? getStoredSessionUser() : null;
     if (typeof triggerInitialLoadingSequence === 'function') {

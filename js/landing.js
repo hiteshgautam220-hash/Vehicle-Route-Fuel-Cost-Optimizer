@@ -166,10 +166,33 @@ window.initLandingSequence = function () {
     }
 
     // Initialize interactive widgets and scroll observers
+    // Immediately set baseline proof figures and hero headline prices
+    revealAllProofFigures();
+    const pEl = document.getElementById('hero-h1-petrol');
+    if (pEl) pEl.textContent = '₹6.31';
+    const cEl = document.getElementById('hero-h1-cng');
+    if (cEl) cEl.textContent = '₹3.00';
+
+    // Initialize interactive widgets and scroll observers
     initInteractiveHowSimulator();
     setupScrollReveals();
     setup3DCardTilt();
 };
+
+// Auto-run landing sequence as soon as script/DOM loads
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        if (typeof window.initLandingSequence === 'function') {
+            window.initLandingSequence();
+        }
+    });
+} else {
+    setTimeout(() => {
+        if (typeof window.initLandingSequence === 'function') {
+            window.initLandingSequence();
+        }
+    }, 50);
+}
 
 // ── Static render (reduced motion) ──────────────────────────────────
 function renderHeroStatic() {
