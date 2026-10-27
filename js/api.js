@@ -4,9 +4,35 @@
  * uniform error responses, and clean async/await methods for all endpoints.
  */
 
-const API_BASE_URL = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
-    ? '' // Relative path when served from same Express server
-    : (window.location.origin || '');
+// ============================================================================
+// EVALUATION 2 CONFIGURATION: Deployed Backend API Integration (Guideline 5)
+// ============================================================================
+// When your backend is deployed (e.g., on Render or Railway), paste your live
+// deployed backend URL below (without trailing slash):
+// Example: const DEPLOYED_BACKEND_URL = 'https://vehicle-cost-optimizer.onrender.com';
+// Leave empty ('') when running both frontend & backend locally on localhost:5000.
+const DEPLOYED_BACKEND_URL = '';
+
+const API_BASE_URL = (() => {
+    // 1. If running on local Express server on port 5000: use relative path
+    if (window.location.port === '5000') {
+        return '';
+    }
+    // 2. If running locally via Live Server (port 5500/3000) or opened via file://
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.protocol === 'file:') {
+        return DEPLOYED_BACKEND_URL || 'http://localhost:5000';
+    }
+    // 3. If running on GitHub Pages / Vercel with deployed backend
+    if (DEPLOYED_BACKEND_URL) {
+        return DEPLOYED_BACKEND_URL.replace(/\/+$/, '');
+    }
+    // 4. Default: served by full-stack Express server on cloud provider
+    return window.location.origin || '';
+})();
+
+// Expose globally for utility scripts
+window.API_BASE_URL = API_BASE_URL;
+window.DEPLOYED_BACKEND_URL = DEPLOYED_BACKEND_URL;
 
 class ApiClient {
     constructor() {

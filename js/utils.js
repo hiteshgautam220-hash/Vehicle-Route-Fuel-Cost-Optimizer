@@ -418,7 +418,8 @@ window.runLiveSyllabusDemo = async (endpoint, outputElementId) => {
     el.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status"></span> Executing GET /api/demo/${endpoint} on Node.js Express server...`;
 
     try {
-        const res = await fetch(`/api/demo/${endpoint}`);
+        const baseUrl = window.API_BASE_URL || (typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : '');
+        const res = await fetch(`${baseUrl}/api/demo/${endpoint}`);
         const data = await res.json();
         el.innerHTML = `// Response from http://localhost:5000/api/demo/${endpoint}\n// HTTP Status: ${res.status} OK\n\n` + JSON.stringify(data, null, 2);
     } catch (err) {
