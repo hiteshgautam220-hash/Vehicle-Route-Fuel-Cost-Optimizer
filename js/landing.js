@@ -135,11 +135,25 @@ const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').match
 
 // ── Init Landing Sequence ───────────────────────────────────────────
 window.initLandingSequence = function () {
-    if (landingInitDone) return;
+    const mapContainer = document.getElementById('hero-map-container');
+    
+    // If container is not visible yet, retry after display:block is set
+    if (!mapContainer || mapContainer.offsetHeight === 0 || mapContainer.offsetWidth === 0) {
+        setTimeout(window.initLandingSequence, 150);
+        return;
+    }
+
+    if (landingInitDone) {
+        if (heroMap) {
+            heroMap.invalidateSize();
+            const bounds = L.latLngBounds(HERO_ROUTE_COORDS);
+            heroMap.fitBounds(bounds, { padding: [30, 30] });
+        }
+        return;
+    }
     landingInitDone = true;
 
-    const mapContainer = document.getElementById('hero-map-container');
-    if (mapContainer && typeof L !== 'undefined') {
+    if (typeof L !== 'undefined') {
         heroMap = L.map('hero-map-container', {
             zoomControl: false,
             attributionControl: false,
@@ -157,6 +171,13 @@ window.initLandingSequence = function () {
 
         const bounds = L.latLngBounds(HERO_ROUTE_COORDS);
         heroMap.fitBounds(bounds, { padding: [30, 30] });
+
+        setTimeout(() => {
+            if (heroMap) {
+                heroMap.invalidateSize();
+                heroMap.fitBounds(bounds, { padding: [30, 30] });
+            }
+        }, 200);
 
         if (reduceMotion) {
             renderHeroStatic();

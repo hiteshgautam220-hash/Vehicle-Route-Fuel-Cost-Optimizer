@@ -8,7 +8,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:5000",
+      "value": "https://vehicle-route-fuel-cost-optimizer.onrender.com",
       "type": "string"
     },
     {
@@ -30,8 +30,13 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/api/health",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "health"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "health"
+          ]
         },
         "description": "Returns system uptime, Node runtime environment, and MongoDB connection status."
       }
@@ -69,8 +74,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/register",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "register"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
             }
           }
         },
@@ -104,8 +115,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "login"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
             }
           }
         },
@@ -121,8 +138,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/auth/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "me"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
             }
           }
         },
@@ -146,8 +169,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/profile",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "profile"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "profile"
+              ]
             }
           }
         }
@@ -190,8 +219,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/trips",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "trips"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips"
+              ]
             }
           }
         },
@@ -207,11 +241,22 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/trips?page=1&limit=10",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "trips"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips"
+              ],
               "query": [
-                { "key": "page", "value": "1" },
-                { "key": "limit", "value": "10" }
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
               ]
             }
           }
@@ -228,8 +273,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/trips/{{tripId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "trips", "{{tripId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips",
+                "{{tripId}}"
+              ]
             }
           }
         },
@@ -253,8 +304,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/trips/{{tripId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "trips", "{{tripId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips",
+                "{{tripId}}"
+              ]
             }
           }
         },
@@ -270,8 +327,14 @@
             ],
             "url": {
               "raw": "{{baseUrl}}/api/trips/{{tripId}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "trips", "{{tripId}}"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "trips",
+                "{{tripId}}"
+              ]
             }
           }
         }
@@ -293,8 +356,14 @@
         },
         "url": {
           "raw": "{{baseUrl}}/api/routes/calculate",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "routes", "calculate"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "routes",
+            "calculate"
+          ]
         }
       }
     },
@@ -308,8 +377,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/fuel-rates",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "fuel-rates"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fuel-rates"
+              ]
             }
           }
         },
@@ -320,8 +394,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/fuel-rates/mumbai",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "fuel-rates", "mumbai"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "fuel-rates",
+                "mumbai"
+              ]
             }
           }
         }
@@ -337,11 +417,22 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/cities?q=bengaluru&limit=5",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "cities"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cities"
+              ],
               "query": [
-                { "key": "q", "value": "bengaluru" },
-                { "key": "limit", "value": "5" }
+                {
+                  "key": "q",
+                  "value": "bengaluru"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                }
               ]
             }
           }
@@ -353,8 +444,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/cities/stats",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "cities", "stats"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "cities",
+                "stats"
+              ]
             }
           }
         }
@@ -376,8 +473,13 @@
         },
         "url": {
           "raw": "{{baseUrl}}/api/feedback",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "feedback"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "feedback"
+          ]
         }
       }
     },
@@ -391,8 +493,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/demo/node-info",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "demo", "node-info"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "node-info"
+              ]
             }
           }
         },
@@ -403,8 +511,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/demo/async-comparison",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "demo", "async-comparison"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "async-comparison"
+              ]
             }
           }
         },
@@ -415,8 +529,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/demo/streams-buffers",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "demo", "streams-buffers"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "streams-buffers"
+              ]
             }
           }
         },
@@ -427,8 +547,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/demo/event-emitter",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "demo", "event-emitter"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "demo",
+                "event-emitter"
+              ]
             }
           }
         }
